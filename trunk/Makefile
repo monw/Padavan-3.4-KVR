@@ -17,13 +17,9 @@ include .config
 include versions.inc
 
 ifeq ($(CONFIG_WITHOUT_KERNEL),y)
-all: tools unpack_trx libc_only libs_only user_only romfs image
+all: dep tools unpack_trx libc_only libs_only user_only romfs image
 else
-ifeq ($(CONFIG_FIRMWARE_TYPE_ROOTFS_IN_RAM),y)
-all: tools modules libc_only libs_only user_only romfs linux image
-else
-all: tools linux libc_only libs_only user_only romfs image
-endif
+all: dep tools linux libc_only libs_only user_only romfs image
 endif
 ############################################################################
 #
@@ -59,13 +55,10 @@ CONFIG_SHELL := $(shell if [ -x "$$BASH" ]; then echo $$BASH; \
 	  else if [ -x /bin/bash ]; then echo /bin/bash; \
 	  else echo sh; fi ; fi)
 
-ifneq ($(findstring linux-3.4,$(LINUXDIR)),)
 FIRMWARE_KERNEL_VER="3.4"
-CONFIG_CROSS_COMPILER_ROOT = $(CONFIG_TOOLCHAIN_DIR)/toolchain-3.4.x
 CONFIG_CROSS_COMPILER_PATH = $(CONFIG_CROSS_COMPILER_ROOT)/bin
 CONFIG_CMAKE_TOOLCHAIN_FILE = $(ROOTDIR)/vendors/cmake/cross-mipsel-linux.cmake
 KERNEL_HEADERS_PATH = $(CONFIG_CROSS_COMPILER_ROOT)/mipsel-linux-uclibc/sysroot/usr/include
-endif
 
 ifeq (config.arch,$(wildcard config.arch))
 ifeq ($(filter %_default, $(MAKECMDGOALS)),)
@@ -132,8 +125,7 @@ romfs: romfs.subdirs modules_install romfs.post
 endif
 
 .PHONY: romfs.subdirs
-romfs.subdirs:
-	for dir in vendors $(DIRS) ; do [ ! -d $$dir ] || $(MAKEARCH) -C $$dir romfs || exit 1 ; done
+romfs.subdirs: $(patsubst %,%_romfs,vendors $(DIRS))
 
 .PHONY: romfs.post
 romfs.post:
@@ -143,11 +135,13 @@ romfs.post:
 
 .PHONY: image
 image:
+	@echo "\033[37;44m   $@   \033[0m"
 	[ -d $(IMAGEDIR) ] || mkdir $(IMAGEDIR)
 	$(MAKEARCH) -C vendors image
 
 .PHONY: linux
 linux:
+	@echo "\033[37;43m BUILD \033[0m\033[37;44m   $(@)   \033[0m"
 	$(MAKEARCH_KERNEL) -j$(HOST_NCPU) -C $(LINUXDIR) $(LINUXTARGET) || exit 1
 	if [ -f $(LINUXDIR)/vmlinux ]; then \
 		ln -f $(LINUXDIR)/vmlinux $(LINUXDIR)/linux ; \
@@ -162,23 +156,7 @@ sparseall:
 	$(MAKEARCH_KERNEL) -C $(LINUXDIR) C=2 $(LINUXTARGET) || exit 1
 
 .PHONY: subdirs
-subdirs: libs
-	for dir in $(DIRS) ; do [ ! -d $$dir ] || $(MAKEARCH) -C $$dir || exit 1 ; done
-
-.PHONY: $(PRODUCTS)
-$(PRODUCTS):
-	cp -f $(TEMPLATE_DIR)/$(@).config $(CONFIG)
-	@echo "CONFIG_CROSS_COMPILER_ROOT=$(TOOLCHAIN_ROOT)" >> $(CONFIG)
-	@echo "CONFIG_CCACHE=y" >> $(CONFIG)
-	@echo "CONFIG_CCACHE=y" >> ${CURDIR}/trunk/.config
-	
-ifeq ($(CONFIG_CCACHE),y)
-	@mkdir -p $(CONFIG_CROSS_COMPILER_ROOT)/lib/ccache
-	@for bin in gcc g++ cc c++; do \
-		ln -sf /usr/bin/ccache $(CONFIG_CROSS_COMPILER_ROOT)/lib/ccache/$$bin; \
-		ln -sf /usr/bin/ccache $(CONFIG_CROSS_COMPILER_ROOT)/lib/ccache/mipsel-linux-uclibc-$$bin; \
-	done
-endif
+subdirs: $(patsubst %,%_only,$(DIRS))
 
 dep:
 	@if [ ! -f $(LINUXDIR)/.config ] ; then \
@@ -188,23 +166,38 @@ dep:
 	$(MAKEARCH_KERNEL) -C $(LINUXDIR) modules_prepare
 	$(MAKEARCH_KERNEL) -C $(LINUXDIR) dep
 
+ifeq ($(CONFIG_CCACHE),y)
+	@mkdir -p $(CONFIG_CROSS_COMPILER_ROOT)/lib/ccache
+	@for bin in gcc g++ cc c++; do \
+		ln -sf /usr/bin/ccache $(CONFIG_CROSS_COMPILER_ROOT)/lib/ccache/$$bin; \
+		ln -sf /usr/bin/ccache $(CONFIG_CROSS_COMPILER_ROOT)/lib/ccache/mipsel-linux-uclibc-$$bin; \
+	done
+endif
+
 .PHONY: tools
 tools:
+	@echo "\033[37;44m   $@   \033[0m"
 	make -C tools
 
 .PHONY: unpack_trx
 unpack_trx:
+	@echo "\033[37;44m   $@   \033[0m"
 	unpack-trx.sh
 
-clean:
-	make clean -C tools
-	for dir in  $(DIRS); do [ ! -d $$dir ] || $(MAKEARCH) -C $$dir clean ; done
-	$(MAKEARCH_KERNEL) -C $(LINUXDIR) distclean
-	rm -rf $(STAGEDIR)
-	rm -rf $(ROMFSDIR)
-	rm -rf $(IMAGEDIR)
+clean: $(patsubst %,%_clean,tools kernel $(DIRS))
+	rm -rf $(STAGEDIR) $(ROMFSDIR) $(IMAGEDIR) $(MERGE_DIR)
 	rm -rf $(LINUXDIR)/net/ipsec/alg/libaes $(LINUXDIR)/net/ipsec/alg/perlasm
 	rm -f $(LINUXDIR)/arch/mips/ramdisk/*.gz
+
+.PHONY: tools_clean
+tools_clean:
+	@echo "\033[37;42m CLEAN \033[0m\033[37;44m   $(@:_clean=)   \033[0m"
+	$(MAKE) -C tools clean
+
+.PHONY: kernel_clean
+kernel_clean:
+	@echo "\033[37;42m CLEAN \033[0m\033[37;44m   $(@:_clean=)   \033[0m"
+	$(MAKEARCH_KERNEL) -C $(LINUXDIR) distclean
 
 %_romfs:
 	@case "$(@)" in \

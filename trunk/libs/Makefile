@@ -41,7 +41,7 @@ LIBS_INCLUDE_LIBXML2=n
 LIBS_INCLUDE_MBEDTLS=n
 LIBS_INCLUDE_READLINE=n
 LIBS_INCLUDE_LIBRTLSDR=n
-LIBS_INCLUDE_C_ARES=n
+LIBS_INCLUDE_LIBCARES=n
 LIBS_INCLUDE_LIBEVENT=n
 LIBS_INCLUDE_BOOST=n
 STORAGE_ENABLED=n
@@ -66,7 +66,7 @@ LIBS_INCLUDE_LIBEV=y
 LIBS_INCLUDE_LIBSODIUM=y
 LIBS_INCLUDE_LIBUDNS=y
 LIBS_INCLUDE_MBEDTLS=y
-LIBS_INCLUDE_C_ARES=y
+LIBS_INCLUDE_LIBCARES=y
 LIBS_INCLUDE_CURL=y
 endif
 ifeq ($(CONFIG_FIRMWARE_INCLUDE_SSSERVER),y)
@@ -74,7 +74,7 @@ LIBS_INCLUDE_LIBPCRE=y
 LIBS_INCLUDE_LIBEV=y
 LIBS_INCLUDE_LIBSODIUM=y
 LIBS_INCLUDE_MBEDTLS=y
-LIBS_INCLUDE_C_ARES=y
+LIBS_INCLUDE_LIBCARES=y
 endif
 ifeq ($(STORAGE_ENABLED),y)
 ifeq ($(CONFIG_FIRMWARE_INCLUDE_TRANSMISSION),y)
@@ -185,7 +185,7 @@ dir_$(LIBS_INCLUDE_LIBUSB_0)			+= libusb
 dir_$(LIBS_INCLUDE_LIBUSB_1)			+= libusb-1.0
 dir_$(LIBS_INCLUDE_LIBRTLSDR)			+= librtlsdr
 dir_$(LIBS_INCLUDE_LIBJSON_C)			+= libjson-c
-dir_$(LIBS_INCLUDE_LIBUV)				+= libuv
+dir_$(LIBS_INCLUDE_LIBUV)			+= libuv
 dir_$(LIBS_INCLUDE_LIBWEBSOCKETS)		+= libwebsockets
 dir_$(LIBS_INCLUDE_LIBPCRE)			+= libpcre
 dir_$(LIBS_INCLUDE_LIBEV)			+= libev
@@ -196,11 +196,8 @@ dir_$(LIBS_INCLUDE_CURL)			+= libcurl
 dir_$(LIBS_INCLUDE_BOOST)			+= boost
 dir_y						+= libnfnetlink
 dir_y						+= libconfuse
-# ipset shared libs
-ifneq ($(CONFIG_WITHOUT_KERNEL),y)
-dir_$(CONFIG_FIRMWARE_INCLUDE_IPSET)		+= libmnl
-endif
-dir_$(LIBS_INCLUDE_LIBPCAP)		+= libpcap
+dir_y						+= libmnl
+dir_$(LIBS_INCLUDE_LIBPCAP)			+= libpcap
 
 # minidlna and firefly shared libs
 dir_$(LIBS_INCLUDE_MEDIA)			+= libid3tag
@@ -211,49 +208,37 @@ dir_$(CONFIG_FIRMWARE_INCLUDE_MINIDLNA)		+= libogg
 dir_$(CONFIG_FIRMWARE_INCLUDE_MINIDLNA)		+= libvorbis
 dir_$(LIBS_INCLUDE_MEDIA)			+= libflac
 dir_$(LIBS_INCLUDE_MEDIA)			+= libsqlite
-dir_$(LIBS_INCLUDE_LIBEVENT)	+= libevent
+dir_$(LIBS_INCLUDE_LIBEVENT)			+= libevent
 
 # aria2 shared libs
-dir_$(LIBS_INCLUDE_LIBXML2)		+= libxml2
+dir_$(LIBS_INCLUDE_LIBXML2)			+= libxml2
 
-dir_$(LIBS_INCLUDE_C_ARES)		+= c-ares
-dir_$(LIBS_INCLUDE_READLINE)		+= readline
+dir_$(LIBS_INCLUDE_LIBCARES)			+= libcares
+dir_$(LIBS_INCLUDE_READLINE)			+= readline
 
 ifneq (,$(filter y,$(CONFIG_FIRMWARE_INCLUDE_NFSD) $(CONFIG_FIRMWARE_INCLUDE_NFSC)))
 dir_y						+= libtirpc
 endif
 
-all:
-	for i in $(dir_y) ; do \
-		[ -d $$i ] && \
-		$(MAKE) -j1 -C $$i || \
-		exit $$? ; \
-		if [ ! -f $(DESTDIR)/.installed_$$i ] ; then \
-			$(MAKE) -C $$i install && \
-			touch $(DESTDIR)/.installed_$$i ; \
-		fi ; \
-	done
+all: $(patsubst %,%_only,$(dir_y))
+
+romfs: $(patsubst %,%_romfs,$(dir_y))
+
+clean: $(patsubst %,%_clean,$(dir_y) $(dir_n) $(dir_))
 
 %_only:
+	@echo "\033[37;43m BUILD \033[0m\033[37;44m   $(@:_only=)   \033[0m"
 	$(MAKE) -C $(@:_only=)
+	@if [ ! -f $(DESTDIR)/.installed_$(@:_only=) ] ; then \
+		$(MAKE) -C $(@:_only=) install && \
+		touch $(DESTDIR)/.installed_$(@:_only=); \
+	fi
 
 %_romfs:
+	@echo "\033[37;42m ROMFS \033[0m\033[37;44m   $(@:_romfs=)   \033[0m"
 	$(MAKE) -C $(@:_romfs=) romfs
 
 %_clean:
+	@echo "\033[37;41m CLEAN \033[0m\033[37;44m   $(@:_clean=)   \033[0m"
 	$(MAKE) -C $(@:_clean=) clean
-
-romfs:
-	for i in $(dir_y) ; do \
-		[ -d $$i ] && \
-		$(MAKE) -C $$i romfs ; \
-	done
-
-clean:
-	for i in `ls -d *` ; do \
-		if [ -d $$i ] ; then \
-			$(MAKE) -C $$i clean ; \
-			rm -f $(DESTDIR)/.installed_$$i ; \
-		fi ; \
-	done
-
+	rm -f $(DESTDIR)/.installed_$(@:_clean=)
