@@ -39,7 +39,7 @@ build: toolchain/download
 		echo "Supported products: $(PRODUCTS)"; \
 		exit 1; \
 	fi
-	@(cd $(SOURCE_DIR); fakeroot ./build_firmware_ci)
+	$(MAKE) -C $(SOURCE_DIR)
 
 clean:
 	@if [ ! -f $(CONFIG) ]; then \

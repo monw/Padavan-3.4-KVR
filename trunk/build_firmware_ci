@@ -455,9 +455,3 @@ fi
 # 	func_disable_kernel_param "CONFIG_SOUND"
 # fi
 #######################################################################
-if [ "$CONFIG_WITHOUT_KERNEL" != "y" ] ; then
-make dep
-fi
-if [ "$2" != "kmod" ] ; then
-make
-fi

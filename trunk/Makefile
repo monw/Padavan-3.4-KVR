@@ -158,14 +158,10 @@ sparseall:
 .PHONY: subdirs
 subdirs: $(patsubst %,%_only,$(DIRS))
 
-dep:
-	@if [ ! -f $(LINUXDIR)/.config ] ; then \
-		echo "ERROR: you need to do a 'make config' first" ; \
-		exit 1 ; \
-	fi
-	$(MAKEARCH_KERNEL) -C $(LINUXDIR) modules_prepare
-	$(MAKEARCH_KERNEL) -C $(LINUXDIR) dep
-
+.PHONY: config dep
+config:
+	@echo "\033[37;44m   $@   \033[0m"
+	@./build_firmware_ci
 ifeq ($(CONFIG_CCACHE),y)
 	@mkdir -p $(CONFIG_CROSS_COMPILER_ROOT)/lib/ccache
 	@for bin in gcc g++ cc c++; do \
@@ -173,6 +169,10 @@ ifeq ($(CONFIG_CCACHE),y)
 		ln -sf /usr/bin/ccache $(CONFIG_CROSS_COMPILER_ROOT)/lib/ccache/mipsel-linux-uclibc-$$bin; \
 	done
 endif
+
+dep: config
+	$(MAKEARCH_KERNEL) -C $(LINUXDIR) modules_prepare
+	$(MAKEARCH_KERNEL) -C $(LINUXDIR) dep
 
 .PHONY: tools
 tools:
