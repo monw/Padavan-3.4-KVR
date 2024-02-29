@@ -32,7 +32,12 @@ jobs:
     - name: Prepare environment
       run: |
           sudo apt update
-          sudo apt install libtool-bin gperf python3-docutils autopoint gettext ccache                                     
+          sudo apt install libtool-bin gperf python3-docutils autopoint gettext ccache
+    - name: Download toolchain
+      run: |
+        cd toolchain-mipsel
+        sh dl_toolchain.sh
+        mkdir -p /opt/images/
     - name: Build firmware
       env:
         TNAME: "${{ github.event.inputs.production }}"
