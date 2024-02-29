@@ -162,12 +162,12 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: ${{ env.TNAME }}-${{ env.TAG_ANME }}
-        path: trunk/images/*.trx        
+        path: /opt/images/*.trx        
     - name: Upload images to Releases
       uses: ncipollo/release-action@v1
       if: ${{ github.event.inputs.release == 'yes' }}
       with:
         commit: ${{ github.sha }}
         tag: ${{ env.TAG_ANME }}
-        artifacts: trunk/images/*.trx
+        artifacts: /opt/images/*.trx
         allowUpdates: true
