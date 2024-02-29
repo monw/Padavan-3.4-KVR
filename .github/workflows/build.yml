@@ -161,7 +161,7 @@ jobs:
     - name : Upload images to Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ env.TNAME }}-${{ env.TAG_ANME }}
+        name: ${{ github.event.inputs.production }}-${{ env.TAG_ANME }}
         path: /opt/images/*.trx        
     - name: Upload images to Releases
       uses: ncipollo/release-action@v1
