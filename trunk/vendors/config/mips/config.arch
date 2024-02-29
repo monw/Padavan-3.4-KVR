@@ -47,7 +47,7 @@ HOST_TARGET   ?= mipsel-linux
 
 MACHINE        = mips
 ARCH           = mips
-CROSS_COMPILE = $(CONFIG_CROSS_COMPILER_PATH)/mipsel-linux-uclibc-
+CROSS_COMPILE  = $(CONFIG_CROSS_COMPILER_PATH)/mipsel-linux-uclibc-
 CROSS          = $(CROSS_COMPILE)
 CONFIGURE_HOST = $(CONFIG_CROSS_COMPILER_PATH)/mipsel-linux-uclibc-
 
