@@ -41,6 +41,7 @@ jobs:
       run: |
         cd toolchain-mipsel
         sh dl_toolchain.sh
+        mkdir -p /opt/images/
     - name: Build firmware
       run: |
         cd trunk
@@ -160,7 +161,6 @@ jobs:
         done
     - name: Organize firmware files
       run: |
-        mkdir -p /opt/images/
         cd trunk/images
         for i in *.trx
         do
