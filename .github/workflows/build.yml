@@ -11,10 +11,6 @@ on:
         description: "是否需要发布到Release? (不发布也可以到Artifacts下载)"
         default: 'yes'
         required: false
-env:
-   MHZ: 1200               # CPU超频频率 必须为20的倍数
-   TNAME: "${{ github.event.inputs.production }}"
-   FIRMWARE_AUTHOR: vipshmily
         
 jobs:
   build:
@@ -43,6 +39,9 @@ jobs:
         sh dl_toolchain.sh
         mkdir -p /opt/images/
     - name: Build firmware
+      env:
+        TNAME: "${{ github.event.inputs.production }}"
+        MHZ: 1200               # CPU超频频率 必须为20的倍数
       run: |
         cd trunk
         echo "CPU超频到$MHZ"mhz
@@ -158,25 +157,17 @@ jobs:
         sudo ./build_firmware_modify $m 0
         sudo mv -f images/*.trx /opt/images/
         echo "TAG_ANME=$(TZ='Asia/Shanghai' date +%Y.%m.%d-%H%M)" >> $GITHUB_ENV
-        done
-    - name: Organize firmware files
-      run: |
-        cd trunk/images
-        for i in *.trx
-        do
-          #echo org $i
-          mv -v "$i" "${i%.*}-${{ env.TAG_ANME }}.trx"
         done                     
     - name : Upload images to Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ inputs.production }}-${{ env.TAG_ANME }}
-        path: /opt/images        
+        name: ${{ github.event.inputs.production }}-${{ env.TAG_ANME }}
+        path: /opt/images/*.trx        
     - name: Upload images to Releases
       uses: ncipollo/release-action@v1
       if: ${{ github.event.inputs.release == 'yes' }}
       with:
         commit: ${{ github.sha }}
         tag: ${{ env.TAG_ANME }}
-        artifacts: /opt/images/*
+        artifacts: /opt/images/*.trx
         allowUpdates: true
