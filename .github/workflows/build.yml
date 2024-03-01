@@ -15,7 +15,6 @@ env:
    MHZ: 1200               # CPU超频频率 必须为20的倍数
    TNAME: "${{ github.event.inputs.production }}"
    FIRMWARE_AUTHOR: vipshmily
-   FIRMWARE_PATH: /opt/firmwares
         
 jobs:
   build:
@@ -156,26 +155,28 @@ jobs:
         #########################################################################################
         sudo ./clear_tree_simple
         sudo ./build_firmware_modify $m 0
-        #sudo mv -f images/*.trx /opt/images/
+        sudo mv -f images/*.trx /opt/images/
         echo "TAG_ANME=$(TZ='Asia/Shanghai' date +%Y.%m.%d-%H%M)" >> $GITHUB_ENV
         done
     - name: Organize firmware files
       run: |
-        mkdir -p $FIRMWARE_PATH/
+        mkdir -p /opt/images/
         cd trunk/images
-        for firmwarefile in $(ls *.trx)
-        do sudo mv $firmwarefile $FIRMWARE_PATH/${{ env.TAG_ANME }}_"${FIRMWARE_AUTHOR}"_"${{ github.event.inputs.production }}"_kernal3.4.trx"
+        for i in *.trx
+        do
+          #echo org $i
+          mv -v "$i" "${i%.*}-${{ env.TAG_ANME }}.trx"
         done                     
     - name : Upload images to Artifact
       uses: actions/upload-artifact@v4
       with:
         name: ${{ inputs.production }}-${{ env.TAG_ANME }}
-        path: ${{ env.FIRMWARE_PATH }}/*.trx        
+        path: /opt/images        
     - name: Upload images to Releases
       uses: ncipollo/release-action@v1
       if: ${{ github.event.inputs.release == 'yes' }}
       with:
         commit: ${{ github.sha }}
         tag: ${{ env.TAG_ANME }}
-        artifacts: ${{ env.FIRMWARE_PATH }}/*.trx
+        artifacts: /opt/images/*
         allowUpdates: true
