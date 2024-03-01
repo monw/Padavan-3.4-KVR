@@ -164,7 +164,7 @@ jobs:
         mkdir -p $FIRMWARE_PATH/
         cd trunk/images
         for firmwarefile in $(ls *.trx)
-        do sudo mv $firmwarefile $FIRMWARE_PATH/${{ env.TAG_ANME }}_"${FIRMWARE_AUTHOR}"_"${{ inputs.target }}"_kernal3.4.trx"
+        do sudo mv $firmwarefile $FIRMWARE_PATH/${{ env.TAG_ANME }}_"${FIRMWARE_AUTHOR}"_"${{ github.event.inputs.target }}"_kernal3.4.trx"
         done                     
     - name : Upload images to Artifact
       uses: actions/upload-artifact@v4
