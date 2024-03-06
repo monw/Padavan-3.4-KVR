@@ -106,7 +106,7 @@
 //#define VERSION "1.0"
 
 /* uncomment if you compile this without poptop's configure script */
-//#define HAVE_FORK
+#define HAVE_FORK
 
 /*
  * Value-return macros to fields in the IP PDU header
@@ -212,11 +212,10 @@ static int vdaemon = 0;
 #define NVBCR_PRINTF( args ) \
  if ((vdaemon == 0) && (do_org_info_printfs == 1)) printf args
 
-static char empty[1] = "";
 static char interfaces[32];
 static char log_interfaces[MAX_IFLOGTOSTR*MAXIF];
 static char log_relayed[(MAX_IFLOGTOSTR-1)*MAXIF+81];
-static char *ipsec = empty;
+static char *ipsec = "";
 
 static void showusage(char *prog)
 {
@@ -311,13 +310,13 @@ int main(int argc, char **argv) {
   regex_t preg;
   /* command line options */
   int c;
-  char *ifout = empty;
-  char *ifin = empty;
+  char *ifout = "";
+  char *ifin = "";
 
 #ifndef BCRELAY
   fprintf(stderr,
-          "bcrelay: pptpd was compiled without support for bcrelay, exiting.\n"
-          "         run configure --with-bcrelay, make, and install.\n");
+	  "bcrelay: pptpd was compiled without support for bcrelay, exiting.\n"
+	  "         run configure --with-bcrelay, make, and install.\n");
   exit(1);
 #endif
 
@@ -382,12 +381,12 @@ int main(int argc, char **argv) {
                         return 1;
                 }
   }
-  if (ifin == empty) {
+  if (ifin == "") {
        syslog(LOG_INFO,"Incoming interface required!");
        showusage(argv[0]);
        _exit(1);
   }
-  if (ifout == empty && ipsec == empty) {
+  if (ifout == "" && ipsec == "") {
        syslog(LOG_INFO,"Listen-mode or outgoing or IPsec interface required!");
        showusage(argv[0]);
        _exit(1);
@@ -399,13 +398,9 @@ int main(int argc, char **argv) {
   if (vdaemon) {
 #if HAVE_DAEMON
     closelog();
-    if (freopen("/dev/null", "r", stdin) == NULL) {
-      syslog(LOG_ERR, "failed to reopen stdin");
-    }
+    freopen("/dev/null", "r", stdin);
     /* set noclose, we want stdout/stderr still attached if we can */
-    if (daemon(0, 1) == -1) {
-      syslog_perror("daemon");
-    }
+    daemon(0, 1);
     /* returns to child only */
     /* pid will have changed */
     openlog("bcrelay", LOG_PID, PPTP_FACILITY);
@@ -430,13 +425,13 @@ static void mainloop(int argc, char **argv)
   struct iflist *iflist = NULL;         // Initialised after the 1st packet
   struct sockaddr_ll sa;
   struct packet *ipp_p;
-  unsigned char *udppdu;
+  char *udppdu; // FIXME: warning: pointer targets in assignment differ in signedness
   fd_set sock_set;
   struct timeval time_2_wait;
   static struct ifsnr old_ifsnr[MAXIF+1]; // Old iflist to socket fd's mapping list
   static struct ifsnr cur_ifsnr[MAXIF+1]; // Current iflist to socket fd's mapping list
   unsigned char buf[1518];
-  char *logstr = empty;
+  char *logstr = "";
 
   no_discifs_cntr = MAX_NODISCOVER_IFS;
   ifs_change = 0;
@@ -667,18 +662,18 @@ static void mainloop(int argc, char **argv)
                  * there is no need to concern about the physical/link layer header because it is
                  * filled in automatically (based on the contents of sa).
                  */
-                if ((nrsent = sendto(cur_ifsnr[j].sock_nr, ipp_p, rlen, MSG_DONTWAIT|MSG_DONTROUTE, (struct sockaddr *)&sa, salen)) < 0)
+                if ((nrsent = sendto(cur_ifsnr[j].sock_nr, ipp_p, rlen, MSG_DONTWAIT|MSG_TRYHARD, (struct sockaddr *)&sa, salen)) < 0)
                 {
-                  if (errno == ENETDOWN) {
-                    syslog(LOG_NOTICE, "ignored ENETDOWN from sendto(), a network interface was going down?");
-                  } else if (errno == ENXIO) {
-                    syslog(LOG_NOTICE, "ignored ENXIO from sendto(), a network interface went down?");
-                  } else if (errno == ENOBUFS) {
-                    syslog(LOG_NOTICE, "ignored ENOBUFS from sendto(), temporary shortage of buffer memory");
-                  } else {
-                    syslog(LOG_ERR, "mainloop: Error, sendto failed! (rv=%d, errno=%d)", nrsent, errno);
-                    exit(1);
-                  }
+		  if (errno == ENETDOWN) {
+		    syslog(LOG_NOTICE, "ignored ENETDOWN from sendto(), a network interface was going down?");
+		  } else if (errno == ENXIO) {
+		    syslog(LOG_NOTICE, "ignored ENXIO from sendto(), a network interface went down?");
+		  } else if (errno == ENOBUFS) {
+		    syslog(LOG_NOTICE, "ignored ENOBUFS from sendto(), temporary shortage of buffer memory");
+		  } else {
+		    syslog(LOG_ERR, "mainloop: Error, sendto failed! (rv=%d, errno=%d)", nrsent, errno);
+		    exit(1);
+		  }
                 }
                 NVBCR_PRINTF(("Successfully relayed %d bytes \n", nrsent));
                 if (vnologging == 0) {
@@ -778,7 +773,7 @@ struct iflist *
 discoverActiveInterfaces(int s) {
   static struct iflist iflist[MAXIF+1];         // Allow for MAXIF interfaces
   static struct ifconf ifs;
-  int i, cntr = 0;
+  int i, j, cntr = 0;
   regex_t preg;
   struct ifreq ifrflags, ifr;
   struct sockaddr_in *sin;
@@ -821,9 +816,9 @@ discoverActiveInterfaces(int s) {
         /*
          * Get interface name
          */
-        strncpy(iflist[cntr].ifname, ifs.ifc_req[i].ifr_ifrn.ifrn_name,
-                sizeof(iflist[cntr].ifname));
-        iflist[cntr].ifname[sizeof(iflist[cntr].ifname)-1] = 0;
+        for (j=0; (j<sizeof(iflist[cntr].ifname) && j<strlen(ifs.ifc_req[i].ifr_ifrn.ifrn_name)); ++j)
+                iflist[cntr].ifname[j] = ifs.ifc_req[i].ifr_ifrn.ifrn_name[j];
+        iflist[cntr].ifname[j+1] = '\0';
 
         /*
          * Get local IP address 
@@ -875,7 +870,7 @@ discoverActiveInterfaces(int s) {
     // IPSEC tunnels are a fun one.  We must change the destination address
     // so that it will be routed to the correct tunnel end point.
     // We can define several tunnel end points for the same ipsec interface.
-    } else if (ipsec != empty && strncmp(ifs.ifc_req[i].ifr_name, "ipsec", 5) == 0) {
+    } else if (ipsec != "" && strncmp(ifs.ifc_req[i].ifr_name, "ipsec", 5) == 0) {
       if (strncmp(ifs.ifc_req[i].ifr_name, ipsec, 6) == 0) {
         struct hostent *hp = gethostbyname(ipsec+7);
         ioctl(s, SIOCGIFINDEX, &ifs.ifc_req[i]);

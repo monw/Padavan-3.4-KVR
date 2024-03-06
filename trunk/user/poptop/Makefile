@@ -1,17 +1,15 @@
-SRC_NAME=pptpd-1.4.0
+SRC_NAME=pptpd-1.3.3
 THISDIR=$(shell pwd)
+
+PPPD_DIR=$(ROOTDIR)/user/pppd
+PPPD_VER=2.4.7
 
 CFLAGS  += -O2
 CFLAGS  += -ffunction-sections -fdata-sections
 LDFLAGS += -Wl,--gc-sections
 
-all: extract_test config_test
+all: config_test
 	$(MAKE) -j$(HOST_NCPU) -C $(SRC_NAME)
-
-extract_test:
-	( if [ ! -d $(SRC_NAME) ]; then \
-		tar xf $(SRC_NAME).tar.xz; \
-	fi )
 
 config_test:
 	( if [ -f ./config_done ]; then \
@@ -24,7 +22,11 @@ configure:
 	( cd $(SRC_NAME) ; \
 	./reconf ; \
 	export ac_cv_header_libintl_h=no ; \
+	export ac_cv_lib_intl_gettext=no ; \
 	./configure \
+		KDIR=$(ROOTDIR)/$(LINUXDIR) \
+		PPPDIR=$(PPPD_DIR) \
+		PPPVER=$(PPPD_VER) \
 		--prefix=/usr \
 		--enable-bcrelay \
 		--host=$(HOST_TARGET) \

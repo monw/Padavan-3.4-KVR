@@ -57,5 +57,5 @@ rm -f config.log
 # run the build tools sequence
 aclocal
 autoconf
-autoheader
 automake -a --copy --verbose
+autoheader

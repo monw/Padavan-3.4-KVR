@@ -1,10 +1,11 @@
-Poptop -- The PPTP Server
+ACCEL-PPTP - The PPTP Client/Server
 -------------------------
 
 Current Maintainer:
-James Cameron <quozl at laptop dot org>
+Kozlov D. xeb@mail.ru
 
 Previous Maintainer:
+James Cameron <james.cameron at hp dot com>
 Richard de Vroede <r.devroede at linvision dot com>
 
 Original Authors:
@@ -27,9 +28,6 @@ Jan Dubiec
 Pawel Guraj
 Chris Wilson
 Anton Gorlov
-Charlie Brady
-Michael Douglass <mikedoug at mikedoug dot net>
-David Lamparter <equinox at diac24 dot net>
 
 The Linux PPTP Server takes advantage of some Linux PPTP client code
 written by C. Scott Ananian <cananian at alumni.princeton.edu>
