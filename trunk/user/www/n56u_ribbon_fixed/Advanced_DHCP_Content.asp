@@ -499,7 +499,7 @@ function changeBgColor(obj, num){
                                     <table width="100%" align="center" cellpadding="4" cellspacing="0" class="table">
                                         <tr>
                                             <th colspan="2" style="background-color: #E3E3E3;"><#t2Advanced#></th>
-					 </tr>
+                                        </tr>
 										<tr>
                                             <th width="50%"><#DHCP_Filter_AAAA#></th>
                                             <td>

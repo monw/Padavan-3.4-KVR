@@ -2005,9 +2005,9 @@ static int shadowsocks_action_hook(int eid, webs_t wp, int argc, char **argv)
 		notify_rc(RCN_RESTART_SS_TUNNEL);
 	} else if (!strcmp(ss_action, "Update_gfwlist")) {
 		notify_rc(RCN_RESTART_GFWLIST_UPD);
-	} else if (!strcmp(ss_action, "Update_dlink")) {
+	}else if (!strcmp(ss_action, "Update_dlink")) {
 		notify_rc(RCN_RESTART_DLINK);
-	} else if (!strcmp(ss_action, "Reset_dlink")) {
+	}else if (!strcmp(ss_action, "Reset_dlink")) {
 		notify_rc(RCN_RESTART_REDLINK);
 	}
 	websWrite(wp, "<script>restart_needed_time(%d);</script>\n", needed_seconds);
@@ -2285,7 +2285,7 @@ static int dnsproxy_status_hook(int eid, webs_t wp, int argc, char **argv)
 {
 	int dnsproxy_status_code = pids("dnsproxy");
 	websWrite(wp, "function dnsproxy_status() { return %d;}\n", dnsproxy_status_code);
-			        return 0;
+	return 0;
 }
 #endif
 
@@ -2615,11 +2615,7 @@ ej_firmware_caps_hook(int eid, webs_t wp, int argc, char **argv)
 #if defined(USE_HW_NAT)
 	int has_ipv4_ppe = 1;
 #if defined(USE_IPV6_HW_NAT)
-#if defined(USE_HW_NAT_V2)
 	int has_ipv6_ppe = 2;
-#else
-	int has_ipv6_ppe = 1;
-#endif
 #else
 	int has_ipv6_ppe = 0;
 #endif

@@ -678,7 +678,7 @@ include_masquerade(FILE *fp, char *wan_if, char *wan_ip, char *lan_net, int is_f
 	char *dtype = "POSTROUTING";
 
 	if (is_fullcone) {
-		fprintf(fp, "-A %s -o %s -s %s -j MASQUERADE --mode fullcone\n", dtype, wan_if, lan_net);
+ 		fprintf(fp, "-A %s -o %s -s %s -j MASQUERADE --mode fullcone\n", dtype, wan_if, lan_net);
  	} else {
  		if (wan_ip)
  			fprintf(fp, "-A %s -o %s -s %s -j SNAT --to-source %s\n", dtype, wan_if, lan_net, wan_ip);
@@ -1733,6 +1733,7 @@ ip6t_nat_rules(char *man_if)
 		doSystem("ip6tables-restore %s", ipt_file);
 }
 
+
 #endif
 
 static int
@@ -2205,7 +2206,7 @@ start_firewall_ex(void)
 #if defined (USE_IPV6)
 	/* IPv6 Mangle rules */
 	ip6t_mangle_rules(man_if);
-
+	ip6t_nat_rules(man_if);
 	/* IPv6 Filter rules */
 	ip6t_filter_rules(man_if, wan_if, lan_if, logaccept, logdrop, i_tcp_mss);
 #endif
