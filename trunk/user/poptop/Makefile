@@ -1,4 +1,4 @@
-SRC_NAME=pptpd-1.3.3
+SRC_NAME=pptpd-1.4.0
 THISDIR=$(shell pwd)
 
 CFLAGS  += -O2
