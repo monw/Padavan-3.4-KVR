@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        target: [MI-R4A, NETGEAR-R7450, MI-4C, PSG1218]
+        target: [MI-R4A, MI-4C]
     steps:
       - uses: actions/checkout@main
       - uses: hendrikmuhs/ccache-action@v1.2
